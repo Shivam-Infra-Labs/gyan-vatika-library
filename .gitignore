@@ -1,0 +1,19 @@
+node_modules/
+.next/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Environment & Local Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Build & Dependencies
+node_modules/
+.next/
+out/
+*.dump

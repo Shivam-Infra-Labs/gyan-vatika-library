@@ -1,0 +1,6 @@
+{
+  "name": "Gyan Vatika Library",
+  "description": "Smart Library & Self-Study Center Management System for Gyan Vatika Library, Chota Gamaria, Jharkhand.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

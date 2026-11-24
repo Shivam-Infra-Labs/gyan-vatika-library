@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${SQL_DB_NAME:-gyan_vatika}
+      POSTGRES_USER: ${SQL_ADMIN_USER:-gv_admin}
+      POSTGRES_PASSWORD: ${SQL_ADMIN_PASSWORD:-changeme_strong_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SQL_ADMIN_USER:-gv_admin} -d ${SQL_DB_NAME:-gyan_vatika}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_CENTER_LAT: ${NEXT_PUBLIC_CENTER_LAT:-22.820576}
+        NEXT_PUBLIC_CENTER_LNG: ${NEXT_PUBLIC_CENTER_LNG:-86.094174}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      OWNER_EMAIL: ${OWNER_EMAIL:-mrs228891@gmail.com}
+      NEXT_PUBLIC_CENTER_LAT: ${NEXT_PUBLIC_CENTER_LAT:-22.820576}
+      NEXT_PUBLIC_CENTER_LNG: ${NEXT_PUBLIC_CENTER_LNG:-86.094174}
+      SQL_HOST: postgres
+      SQL_DB_NAME: ${SQL_DB_NAME:-gyan_vatika}
+      SQL_USER: ${SQL_ADMIN_USER:-gv_admin}
+      SQL_PASSWORD: ${SQL_ADMIN_PASSWORD:-changeme_strong_password}
+      SQL_ADMIN_USER: ${SQL_ADMIN_USER:-gv_admin}
+      SQL_ADMIN_PASSWORD: ${SQL_ADMIN_PASSWORD:-changeme_strong_password}
+      STUDENT_SESSION_SECRET: ${STUDENT_SESSION_SECRET:-change-me-in-production}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+
+  pg_backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${SQL_DB_NAME:-gyan_vatika}
+      PGUSER: ${SQL_ADMIN_USER:-gv_admin}
+      PGPASSWORD: ${SQL_ADMIN_PASSWORD:-changeme_strong_password}
+    volumes:
+      - pgbackups:/backups
+    entrypoint: >
+      sh -c "while true; do
+        pg_dump -Fc -f /backups/gyan_vatika_$$(date +%Y%m%d_%H%M%S).dump;
+        find /backups -name '*.dump' -mtime +14 -delete;
+        sleep 86400;
+      done"
+
+volumes:
+  pgdata:
+  pgbackups:
